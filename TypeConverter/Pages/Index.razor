@@ -1,9 +1,72 @@
 ﻿@page "/"
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Converter</PageTitle>
 
-<h1>Hello, world!</h1>
+<InputText @bind-Value="@_converter.Input">Input</InputText>
+<h2>Hex: @_converter.Result</h2>
+<button @onclick="CalculateHex">Calculate</button>
 
-Welcome to your new app.
+<br/>
+<br/>
 
-<SurveyPrompt Title="How is Blazor working for you?"/>
+<InputText @bind-Value="_converter2.Input">Input</InputText>
+<h2>Binary: @_converter2.Result</h2>
+<button @onclick="CalculateBinary">Calculate</button>
+
+@code
+{
+	public Converter _converter;
+	public Converter _converter2;
+	protected override Task OnInitializedAsync()
+	{
+		_converter = new Converter { Input = "101010" };
+		_converter2 = new Converter { Input = "2A" };
+		return base.OnInitializedAsync();
+	}
+
+	public void CalculateHex()
+	{
+		var ba = new List<byte>();
+		string withoutSpaces = _converter.Input.Replace(" ", "");
+		var split = withoutSpaces.Chunk(8);
+		foreach (char[] b in split)
+		{
+			var bstring = new string(b);
+
+			var val = Convert.ToInt32(bstring, 2);
+
+			ba.Add(Convert.ToByte(val));
+		}
+
+		string hex = "0x" + Convert.ToHexString(ba.ToArray());
+
+		_converter.Result = hex;
+	}
+
+	public void CalculateBinary()
+	{
+		var hex = Convert.ToInt32(_converter2.Input, 16);
+		int b = Convert.ToByte(hex);
+		var bytes = BitConverter.GetBytes((int)b);
+		Array.Reverse(bytes);
+
+		string binString = bytes.Aggregate("", (s, b) => s + Convert.ToString(b, 2).PadLeft(8,'0'));
+		
+		var chunk = binString.Chunk(8);
+		string ret = "";
+		foreach (var c in chunk)
+		{
+			ret += new string(c);
+			ret += " ";
+		}
+		
+		_converter2.Result = ret.Trim(' ');
+	}
+	
+	public class Converter
+	{
+		public string? Input { get; set; }
+
+		public string? Result { get; set; }
+	}
+}
